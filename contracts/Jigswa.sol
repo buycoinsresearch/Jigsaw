@@ -12,7 +12,6 @@ contract Jigsaw is ERC721URIStorage {
     Counters.Counter private _tokenIds;
 
     mapping (uint => string) solutions;
-    mapping (uint => address) public creators;
 
     constructor() ERC721("Fractional NFT", "FRACTION") {
     }
@@ -29,29 +28,18 @@ contract Jigsaw is ERC721URIStorage {
             _setTokenURI(newItemId, uri[i]);
 
             solutions[newItemId] = solution[i];
-            creators[newItemId] = msg.sender;
         }
 
         return true;
     }
 
-    function mintNFT(address recipient, uint tokenId)
-        public
-        returns (bool)
-    {
-        require(ownerOf(tokenId) == address(this));
-        require(recipient != address(this));
-        transferFrom(address(this), recipient, tokenId);
-        return true;
-    }
-
-    function completePuzzle(uint tokenId, string memory solution, string memory uri)
+    function completePuzzle(uint tokenId, string memory solution)
         public
         returns (bool)
     {
         require(keccak256(abi.encodePacked(solution)) == keccak256(abi.encodePacked(solutions[tokenId])), "Incorrect solution");
         
-        _setTokenURI(tokenId, uri);
+        transferFrom(address(this), msg.sender, tokenId);
 
         return true;
     }
