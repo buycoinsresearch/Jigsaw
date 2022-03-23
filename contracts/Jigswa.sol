@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract Jigsaw is ERC721URIStorage {
@@ -17,11 +16,10 @@ contract Jigsaw is ERC721URIStorage {
         bool status;
     }
 
-    mapping (uint => tokenDetails) public solutions;
+    mapping (uint => tokenDetails) solutions;
     uint total;
 
-    constructor() ERC721("Fractional NFT", "FRACTION") {
-    }
+    constructor() ERC721("Jigsaw NFT", "JIGSAW") {}
 
     function createNFTs(bytes32[] memory solution, string[] memory uri) public returns(bool) {
         require(solution.length == uri.length, "Solution and URI must be the same length");
@@ -39,19 +37,23 @@ contract Jigsaw is ERC721URIStorage {
         return true;
     }
 
-    function completePuzzle(uint tokenId, string memory solution)
-        public returns (bool)
+    function completePuzzle(uint tokenId, bytes memory solution)
+        public returns (uint)
     {
-        bytes memory sol = bytes(solution);
-        bytes32 esol = sha256(sol);
+        bytes32 esol = sha256(solution);
         require(esol == solutions[tokenId].solution, "Incorrect Solution");
+        require(solutions[tokenId].status == false, "Token claimed");
         
         _tokenIds.increment();
         uint newItemId = _tokenIds.current();
         _mint(msg.sender, newItemId);
         _setTokenURI(newItemId, solutions[tokenId].uri);
+        solutions[tokenId].status = true;
+        return newItemId;
+    }
 
-        return true;
+    function getTokenStatus(uint tokenId) public view returns(bool) {
+        return solutions[tokenId].status;
     }
 
 }
