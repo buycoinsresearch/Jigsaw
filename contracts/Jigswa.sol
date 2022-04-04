@@ -13,11 +13,13 @@ contract Jigsaw is ERC721URIStorage {
     struct tokenDetails {
         bytes32 solution;
         string uri;
-        bool status;
+        bool minted;
     }
 
     mapping (uint => tokenDetails) solutions;
-    uint total;
+    mapping (string => bool) existence;
+
+    uint public total;
 
     constructor() ERC721("Jigsaw NFT", "JIGSAW") {}
 
@@ -25,13 +27,16 @@ contract Jigsaw is ERC721URIStorage {
         require(solution.length == uri.length, "Solution and URI must be the same length");
         
         for (uint i = 0; i < solution.length; i++) {
-            uint newItemId = total +1;
+            require(existence[uri[i]] == false, "NFT already minted");
+            total++;
+            uint newItemId = total;
 
             solutions[newItemId] = tokenDetails(
                 solution[i],
                 uri[i],
                 false
             );
+            existence[uri[i]] = true;
         }
 
         return true;
@@ -42,18 +47,22 @@ contract Jigsaw is ERC721URIStorage {
     {
         bytes32 esol = sha256(solution);
         require(esol == solutions[tokenId].solution, "Incorrect Solution");
-        require(solutions[tokenId].status == false, "Token claimed");
+        require(solutions[tokenId].minted == false, "Token claimed");
         
         _tokenIds.increment();
         uint newItemId = _tokenIds.current();
         _mint(msg.sender, newItemId);
         _setTokenURI(newItemId, solutions[tokenId].uri);
-        solutions[tokenId].status = true;
+        solutions[tokenId].minted = true;
         return newItemId;
     }
 
     function getTokenStatus(uint tokenId) public view returns(bool) {
-        return solutions[tokenId].status;
+        return solutions[tokenId].minted;
+    }
+
+    function getTokenDetails(uint tokenId) public view returns(string memory) {
+        return solutions[tokenId].uri;
     }
 
 }
